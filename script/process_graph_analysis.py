@@ -11,7 +11,8 @@ from script.utility import read_path_mapping_file
 
 NODE_INPUT_KEY = 'Site_in'
 EDGE_INPUT_KEYS = ['T2S_MY_in', 'T2S_MN_in', 'T2S_FY_in', 'T2S_FN_in']
-OUTPUT_KEYS = ['Site_MY_out', 'Site_MN_out', 'Site_FY_out', 'Site_FN_out']
+NODE_OUTPUT_KEYS = ['Site_MY_out', 'Site_MN_out', 'Site_FY_out', 'Site_FN_out']
+EDGE_OUTPUT_KEYS = ['T2S_MY_out', 'T2S_MN_out', 'T2S_FY_out', 'T2S_FN_out']
 
 EDGE_WEIGHT = 0.2
 
@@ -50,7 +51,8 @@ def append_modularity_community(node_data, graph):
             continue
         community_labels.append(map_comm_label[n_id])
     node_data = node_data.assign(modularity=community_labels)
-    return node_data[node_data['modularity'].isnull()==False]
+    node_data = node_data[node_data['modularity'].isnull()==False]
+    return node_data.astype({'modularity': 'int32'})
 
 
 def append_node_centrality(node_data, graph):
@@ -65,16 +67,23 @@ def append_node_centrality(node_data, graph):
 
 def main():
     path_map = read_path_mapping_file()
-
-    for in_key, out_key in zip(EDGE_INPUT_KEYS, OUTPUT_KEYS):
+    for in_key, out_n_key, out_e_key in zip(EDGE_INPUT_KEYS, NODE_OUTPUT_KEYS, EDGE_OUTPUT_KEYS):
         in_nodes = pd.read_csv(path_map[NODE_INPUT_KEY])
         in_edges = pd.read_csv(path_map[in_key])
         graph = build_graph(node_data=in_nodes, edge_data=in_edges)
 
-        processed_data = append_modularity_community(node_data=in_nodes, graph=graph)
-        out_data = append_node_centrality(node_data=processed_data, graph=graph)
-        out_data.to_csv(path_map[out_key])      
-        print(">>", path_map[out_key])
+        node_data = append_modularity_community(node_data=in_nodes, graph=graph)
+        node_data = append_node_centrality(node_data=node_data, graph=graph)
+        node_data.to_csv(path_map[out_n_key], index=False, header=True)      
+        print(">>", path_map[out_n_key])
+
+        filtered_edges = list()
+        for s, d, attr in graph.edges(data=True):
+            instance = (s, d, attr['weight'])
+            filtered_edges.append(instance)
+        edge_data = pd.DataFrame(filtered_edges, columns=in_edges.columns)
+        edge_data.to_csv(path_map[out_e_key], index=False, header=True)
+        print(">>", path_map[out_e_key])
 
 
 if __name__ == "__main__":
