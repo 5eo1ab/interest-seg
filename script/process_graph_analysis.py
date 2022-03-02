@@ -9,7 +9,7 @@ from matplotlib import cm, colors
 sys.path.append(os.getcwd())
 from script.utility import read_path_mapping_file
 
-NODE_INPUT_KEY = 'Site_in'
+NODE_INPUT_KEYS = ['Site_MY_in', 'Site_MN_in', 'Site_FY_in', 'Site_FN_in']
 EDGE_INPUT_KEYS = ['T2S_MY_in', 'T2S_MN_in', 'T2S_FY_in', 'T2S_FN_in']
 NODE_OUTPUT_KEYS = ['Site_MY_out', 'Site_MN_out', 'Site_FY_out', 'Site_FN_out']
 EDGE_OUTPUT_KEYS = ['T2S_MY_out', 'T2S_MN_out', 'T2S_FY_out', 'T2S_FN_out']
@@ -40,6 +40,7 @@ def build_graph(node_data:pd.DataFrame, edge_data:pd.DataFrame):
 
 def append_modularity_community(node_data, graph):
     comm = nxcomm.greedy_modularity_communities(graph, weight='weight')
+    print("Count of Modularity: ", len(comm))
     map_comm_label = dict()
     for idx, node_set in enumerate(comm):
         for n in node_set:
@@ -67,9 +68,10 @@ def append_node_centrality(node_data, graph):
 
 def main():
     path_map = read_path_mapping_file()
-    for in_key, out_n_key, out_e_key in zip(EDGE_INPUT_KEYS, NODE_OUTPUT_KEYS, EDGE_OUTPUT_KEYS):
-        in_nodes = pd.read_csv(path_map[NODE_INPUT_KEY])
-        in_edges = pd.read_csv(path_map[in_key])
+    key_set = zip(NODE_INPUT_KEYS, EDGE_INPUT_KEYS, NODE_OUTPUT_KEYS, EDGE_OUTPUT_KEYS)
+    for in_n_key, in_e_key, out_n_key, out_e_key in key_set:
+        in_nodes = pd.read_csv(path_map[in_n_key])
+        in_edges = pd.read_csv(path_map[in_e_key])
         graph = build_graph(node_data=in_nodes, edge_data=in_edges)
 
         node_data = append_modularity_community(node_data=in_nodes, graph=graph)

@@ -2,10 +2,12 @@ import os
 import pathlib
 import csv
 
+BASE_MAP_PATH_FILE = 'data/map_path_20220302.csv'
+
 def read_path_mapping_file(file_path:str=None, delimiter:str=',') -> dict:
     if file_path is None:
         base_path = os.getcwd()
-        file_path = f'{base_path}/data/map_path_test.csv'
+        file_path = f'{base_path}/{BASE_MAP_PATH_FILE}'
     map_path = dict()
     with open(file_path, 'r', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile, delimiter=delimiter)

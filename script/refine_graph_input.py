@@ -4,19 +4,19 @@ import numpy as np
 sys.path.append(os.getcwd())
 from script.utility import read_path_mapping_file
 
-NODE_INPUT_KEY = 'Site'
-NODE_OUTPUT_KEY = 'Site_in'
 NODE_COLUMN_MAPPER = {
     'id': 'site_id',
     'label': 'site_nm',
 }
+NODE_INPUT_KEYS = ['Site_MY', 'Site_MN', 'Site_FY', 'Site_FN']
+NODE_OUTPUT_KEYS = ['Site_MY_in', 'Site_MN_in', 'Site_FY_in', 'Site_FN_in']
 EDGE_INPUT_KEYS = ['T2S_MY', 'T2S_MN', 'T2S_FY', 'T2S_FN']
 EDGE_OUTPUT_KEYS = ['T2S_MY_in', 'T2S_MN_in', 'T2S_FY_in', 'T2S_FN_in']
 
 
 def replace_node_header(data:pd.DataFrame, column_mapper:dict) -> pd.DataFrame:
     out_columns = list(data.columns)
-    for k,v in NODE_COLUMN_MAPPER.items():
+    for k,v in column_mapper.items():
         idx = out_columns.index(v)
         out_columns[idx] = k
     data.columns = out_columns
@@ -48,13 +48,14 @@ def convert_cosine_similarity_edge_list(data:pd.DataFrame) -> pd.DataFrame:
 def main():
     path_map = read_path_mapping_file()
     
-    node_data = pd.read_csv(path_map[NODE_INPUT_KEY])
-    node_data = replace_node_header(
-        data=node_data,
-        column_mapper=NODE_COLUMN_MAPPER,
-    )
-    node_data.to_csv(path_map[NODE_OUTPUT_KEY], header=True, index=False)
-    print('>>', path_map[NODE_OUTPUT_KEY])
+    for in_key, out_key in zip(NODE_INPUT_KEYS, NODE_OUTPUT_KEYS):
+        node_data = pd.read_csv(path_map[in_key])
+        node_data = replace_node_header(
+            data=node_data,
+            column_mapper=NODE_COLUMN_MAPPER,
+        )
+        node_data.to_csv(path_map[out_key], header=True, index=False)
+        print('>>', path_map[out_key])
 
     for in_key, out_key in zip(EDGE_INPUT_KEYS, EDGE_OUTPUT_KEYS):
         in_data = pd.read_csv(path_map[in_key])
